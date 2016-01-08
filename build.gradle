@@ -1,0 +1,41 @@
+apply plugin: 'java'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+	
+repositories {
+    mavenCentral()
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.4'
+}
+
+dependencies {
+   	compile group: 'org.asynchttpclient', name: 'async-http-client', version: '2.0.0-RC5'
+   	compile group: 'com.google.guava', name: 'guava', version: '18.0'
+   	compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
+   	compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.2'
+   	compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.2'
+   	testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+jar {
+	baseName='openio-api-java'
+}
+
+task fatJar(type: Jar) {
+  baseName='openio-api-java'
+  classifier = 'all'
+  from {
+    configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
+  } {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+  }
+  with jar
+}
+
+artifacts {
+	archives fatJar
+}
