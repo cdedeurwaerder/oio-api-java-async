@@ -25,7 +25,7 @@ import io.openio.sds.models.OioUrl;
  * Simple example:
  * 
  * <code>
- * Client client = ClientBuilder.newClient("http://127.0.0.1:6002");
+ * Client client = ClientBuilder.newClient("OPENIO", "http://127.0.0.1:6002");
  * </code>
  * 
  * </p>
@@ -40,6 +40,7 @@ import io.openio.sds.models.OioUrl;
  *             .setRequestTimeout(10000)
  *             .setHttpClientCodecMaxChunkSize(8192 * 4));
  * Client client = ClientBuilder.prepareClient()
+ *       .ns("OPENIO")
  *       .proxydUrl("http://127.0.0.1:6002")
  *       .http(http)
  *       .build();

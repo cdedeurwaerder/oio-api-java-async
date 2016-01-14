@@ -1,31 +1,7 @@
 package io.openio.sds.client;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static io.openio.sds.client.OioConstants.ACCOUNT_HEADER;
-import static io.openio.sds.client.OioConstants.CONTAINER_SYS_NAME_HEADER;
-import static io.openio.sds.client.OioConstants.CONTENT_META_CTIME_HEADER;
-import static io.openio.sds.client.OioConstants.CONTENT_META_HASH_HEADER;
-import static io.openio.sds.client.OioConstants.CONTENT_META_HASH_METHOD_HEADER;
-import static io.openio.sds.client.OioConstants.CONTENT_META_ID_HEADER;
-import static io.openio.sds.client.OioConstants.CONTENT_META_LENGTH_HEADER;
-import static io.openio.sds.client.OioConstants.CONTENT_META_MIME_TYPE_HEADER;
-import static io.openio.sds.client.OioConstants.CONTENT_META_POLICY_HEADER;
-import static io.openio.sds.client.OioConstants.CONTENT_META_VERSION_HEADER;
-import static io.openio.sds.client.OioConstants.LIST_TRUNCATED_HEADER;
-import static io.openio.sds.client.OioConstants.M2_CTIME_HEADER;
-import static io.openio.sds.client.OioConstants.M2_INIT_HEADER;
-import static io.openio.sds.client.OioConstants.M2_USAGE_HEADER;
-import static io.openio.sds.client.OioConstants.M2_VERSION_HEADER;
-import static io.openio.sds.client.OioConstants.NS_HEADER;
-import static io.openio.sds.client.OioConstants.OIO_ACTION_MODE_HEADER;
-import static io.openio.sds.client.OioConstants.SCHEMA_VERSION_HEADER;
-import static io.openio.sds.client.OioConstants.TYPE_HEADER;
-import static io.openio.sds.client.OioConstants.USER_NAME_HEADER;
-import static io.openio.sds.client.OioConstants.VERSION_MAIN_ADMIN_HEADER;
-import static io.openio.sds.client.OioConstants.VERSION_MAIN_ALIASES_HEADER;
-import static io.openio.sds.client.OioConstants.VERSION_MAIN_CHUNKS_HEADER;
-import static io.openio.sds.client.OioConstants.VERSION_MAIN_CONTENTS_HEADER;
-import static io.openio.sds.client.OioConstants.VERSION_MAIN_PROPERTIES_HEADER;
+import static io.openio.sds.client.OioConstants.*;
 import static io.openio.sds.common.HttpHelper.ensureSuccess;
 import static io.openio.sds.common.HttpHelper.longHeader;
 import static io.openio.sds.common.JsonUtils.gson;
@@ -80,10 +56,8 @@ public class ProxyClient {
     /**
      * Creates a container for the specified {@code Account}
      * 
-     * @param accountName
-     *            the name of the linked {@code Account}
-     * @param containerName
-     *            the name of the container to create
+     * @param url
+     *            the Oio url
      * @param listener
      *            the listener to use on completion or exception. Could be
      *            {@code null}.
@@ -113,8 +87,9 @@ public class ProxyClient {
             }
         };
         return http.preparePost(
-                format("%s/v3.0/NS/container/create?acct=%s&ref=%s",
-                        settings.url(), url.account(), url.container()))
+                format("%s/v3.0/%s/container/create?acct=%s&ref=%s",
+                        settings.url(), settings.ns(), url.account(),
+                        url.container()))
                 .addHeader(OIO_ACTION_MODE_HEADER, "autocreate")
                 .execute(handler);
     }
@@ -122,8 +97,7 @@ public class ProxyClient {
     /**
      * Returns informations about the specified container
      * 
-     * @param accountName
-     * @param containerName
+     * @param url
      * @param listener
      * @return
      */
@@ -171,8 +145,9 @@ public class ProxyClient {
         };
 
         return http.prepareGet(
-                format("%s/v3.0/NS/container/show?acct=%s&ref=%s",
-                        settings.url(), url.account(), url.container()))
+                format("%s/v3.0/%s/container/show?acct=%s&ref=%s",
+                        settings.url(), settings.ns(), url.account(),
+                        url.container()))
                 .execute(handler);
     }
 
@@ -215,8 +190,9 @@ public class ProxyClient {
             }
         };
         BoundRequestBuilder builder = http.prepareGet(
-                format("%s/v3.0/NS/container/list?acct=%s&ref=%s",
-                        settings.url(), url.account(), url.container()))
+                format("%s/v3.0/%s/container/list?acct=%s&ref=%s",
+                        settings.url(), settings.ns(), url.account(),
+                        url.container()))
                 .addQueryParam("max", String.valueOf(listOptions.getLimit()));
         if (null != listOptions.getPrefix())
             builder.addQueryParam("prefix", String.valueOf(listOptions.getPrefix()));
@@ -255,8 +231,9 @@ public class ProxyClient {
             }
         };
         return http.preparePost(
-                format("%s/v3.0/NS/container/destroy?acct=%s&ref=%s",
-                        settings.url(), url.account(), url.container()))
+                format("%s/v3.0/%s/container/destroy?acct=%s&ref=%s",
+                        settings.url(), settings.ns(), url.account(),
+                        url.container()))
                 .execute(handler);
 
     }
@@ -294,9 +271,9 @@ public class ProxyClient {
         };
         return http.preparePost(
                 String.format(
-                        "%s/v3.0/NS/content/prepare?acct=%s&ref=%s&path=%s",
-                        settings.url(), url.account(), url.container(),
-                        url.object()))
+                        "%s/v3.0/%s/content/prepare?acct=%s&ref=%s&path=%s",
+                        settings.url(), settings.ns(), url.account(),
+                        url.container(), url.object()))
                 .setBody(gson().toJson(new BeansRequest().size(size)))
                 .execute(handler);
     }
@@ -328,8 +305,9 @@ public class ProxyClient {
         };
         return http
                 .preparePost(String.format(
-                        "%s/v3.0/NS/content/create?acct=%s&ref=%s&path=%s",
-                        settings.url(), objectInfo.url().account(),
+                        "%s/v3.0/%s/content/create?acct=%s&ref=%s&path=%s",
+                        settings.url(), settings.ns(),
+                        objectInfo.url().account(),
                         objectInfo.url().container(),
                         objectInfo.url().object()))
                 .setHeader(CONTENT_META_LENGTH_HEADER,
@@ -366,9 +344,9 @@ public class ProxyClient {
             }
         };
         return http.prepareGet(
-                String.format("%s/v3.0/NS/content/show?acct=%s&ref=%s&path=%s",
-                        settings.url(), url.account(), url.container(),
-                        url.object()))
+                String.format("%s/v3.0/%s/content/show?acct=%s&ref=%s&path=%s",
+                        settings.url(), settings.ns(), url.account(),
+                        url.container(), url.object()))
                 .execute(handler);
     }
     
@@ -393,9 +371,9 @@ public class ProxyClient {
         };
         return http.preparePost(
                 String.format(
-                        "%s/v3.0/NS/content/delete?acct=%s&ref=%s&path=%s",
-                        settings.url(), url.account(), url.container(),
-                        url.object()))
+                        "%s/v3.0/%s/content/delete?acct=%s&ref=%s&path=%s",
+                        settings.url(), settings.ns(), url.account(),
+                        url.container(), url.object()))
                 .execute(handler);
     }
 
@@ -405,6 +383,7 @@ public class ProxyClient {
                 .oid(r.getHeader(CONTENT_META_ID_HEADER))
                 .size(longHeader(r, CONTENT_META_LENGTH_HEADER))
                 .ctime(longHeader(r, CONTENT_META_CTIME_HEADER))
+                .chunkMethod(r.getHeader(CONTENT_META_CHUNK_METHOD_HEADER))
                 .policy(r.getHeader(CONTENT_META_POLICY_HEADER))
                 .version(longHeader(r, CONTENT_META_VERSION_HEADER))
                 .hashMethod(r.getHeader(CONTENT_META_HASH_METHOD_HEADER))
