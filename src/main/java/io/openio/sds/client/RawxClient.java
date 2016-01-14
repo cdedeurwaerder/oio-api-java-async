@@ -2,14 +2,7 @@ package io.openio.sds.client;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.net.HttpHeaders.CONTENT_LENGTH;
-import static io.openio.sds.client.OioConstants.CHUNK_META_CHUNK_HASH;
-import static io.openio.sds.client.OioConstants.CHUNK_META_CHUNK_ID;
-import static io.openio.sds.client.OioConstants.CHUNK_META_CHUNK_POS;
-import static io.openio.sds.client.OioConstants.CHUNK_META_CONTAINER_ID;
-import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_CHUNKSNB;
-import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_ID;
-import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_PATH;
-import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_SIZE;
+import static io.openio.sds.client.OioConstants.*;
 import static java.lang.String.format;
 import static java.nio.ByteBuffer.wrap;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -196,6 +189,9 @@ public class RawxClient {
             BoundRequestBuilder builder = http.preparePut(ci.url())
                     .setHeader(CHUNK_META_CONTAINER_ID, oinf.url().cid())
                     .setHeader(CHUNK_META_CONTENT_ID, oinf.oid())
+                    .setHeader(CHUNK_META_CONTENT_POLICY, oinf.policy())
+                    .setHeader(CHUNK_META_CONTENT_MIME_TYPE, oinf.mtype())
+                    .setHeader(CHUNK_META_CONTENT_CHUNK_METHOD, oinf.chunkMethod())
                     .setHeader(CHUNK_META_CONTENT_CHUNKSNB,
                             String.valueOf(oinf.nbchunks()))
                     .setHeader(CHUNK_META_CONTENT_SIZE,
@@ -298,6 +294,9 @@ public class RawxClient {
             futures.add(http.preparePut(ci.url())
                     .setHeader(CHUNK_META_CONTAINER_ID, oinf.url().cid())
                     .setHeader(CHUNK_META_CONTENT_ID, oinf.oid())
+                    .setHeader(CHUNK_META_CONTENT_POLICY, oinf.policy())
+                    .setHeader(CHUNK_META_CONTENT_CHUNK_METHOD, oinf.chunkMethod())
+                    .setHeader(CHUNK_META_CONTENT_MIME_TYPE, oinf.mtype())
                     .setHeader(CHUNK_META_CONTENT_CHUNKSNB,
                             String.valueOf(oinf.chunks().size()))
                     .setHeader(CHUNK_META_CONTENT_SIZE,
