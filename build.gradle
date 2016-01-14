@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 	
@@ -7,8 +8,11 @@ repositories {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
+    gradleVersion = '2.10'
 }
+
+group = 'io.openio.sds'
+version = '0.1.0'
 
 dependencies {
    	compile group: 'org.asynchttpclient', name: 'async-http-client', version: '2.0.0-RC5'
@@ -36,6 +40,22 @@ task fatJar(type: Jar) {
   with jar
 }
 
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
 artifacts {
 	archives fatJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+	    artifact sourceJar {
+	        classifier "sources"
+	    }
+        }
+    }
 }
