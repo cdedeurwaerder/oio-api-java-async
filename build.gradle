@@ -28,11 +28,11 @@ test {
 }
 
 jar {
-	baseName='openio-api-java'
+	baseName='openio-api'
 }
 
 task fatJar(type: Jar) {
-  baseName='openio-api-java'
+  baseName='openio-api'
   classifier = 'all'
   from {
     configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
@@ -56,6 +56,8 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
+            groupId 'io.openio.sds'
+            artifactId 'openio-api'
 
 	    artifact sourceJar {
 	        classifier "sources"
