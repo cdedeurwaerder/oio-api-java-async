@@ -15,6 +15,7 @@ import io.openio.sds.client.settings.Settings;
  */
 public class ClientBuilder {
 
+    private String ns;
     private String proxydUrl;
     private AsyncHttpClient http;
 
@@ -28,7 +29,7 @@ public class ClientBuilder {
     }
 
     /**
-     * Defines the url of the Oio proxyd service
+     * Defines the url of the OpenIO proxyd service
      * 
      * @param proxydUrl
      *            the url to set
@@ -36,6 +37,18 @@ public class ClientBuilder {
      */
     public ClientBuilder proxydUrl(String proxydUrl) {
         this.proxydUrl = proxydUrl;
+        return this;
+    }
+
+    /**
+     * Defines the OpenIO Namespace
+     *
+     * @param ns
+     *          the OpenIO Namespace to set
+     * @return this
+     */
+    public ClientBuilder ns(String ns) {
+        this.ns = ns;
         return this;
     }
 
@@ -60,6 +73,7 @@ public class ClientBuilder {
     public DefaultClient build() {
         return new DefaultClient(null == http ? Dsl.asyncHttpClient() : http,
                 new Settings().proxy(new ProxySettings()
+                        .ns(ns)
                         .url(proxydUrl))
                         .rawx(new RawxSettings()));
     }
@@ -67,14 +81,17 @@ public class ClientBuilder {
     /**
      * Creates a client without specific configuration. Useful for testing
      * purpose
-     * 
+     *
+     * @param ns
+     *            the OpenIO Namespace
      * @param proxydUrl
-     *            the url of Oio Proxyd service
+     *            the url of OpenIO proxyd service
      * @return The build {@link Client}
      */
-    public static DefaultClient newClient(String proxydUrl) {
+    public static DefaultClient newClient(String ns, String proxydUrl) {
         return new DefaultClient(Dsl.asyncHttpClient(),
                 new Settings().proxy(new ProxySettings()
+                        .ns(ns)
                         .url(proxydUrl))
                         .rawx(new RawxSettings()));
     }

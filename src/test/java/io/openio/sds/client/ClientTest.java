@@ -46,7 +46,9 @@ public class ClientTest {
 
     @BeforeClass
     public static void setup() {
-        client = prepareClient().proxydUrl(helper.proxyd())
+        client = prepareClient()
+                .ns(helper.ns())
+                .proxydUrl(helper.proxyd())
                 .http(Dsl.asyncHttpClient(
                         new DefaultAsyncHttpClientConfig.Builder()
                                 .setRequestTimeout(10000)
@@ -202,13 +204,13 @@ public class ClientTest {
         client.createContainer(url, assertListener()).get();
         try {
             ObjectInfo o = client.putObject(url, 0L,
-                    new File("/home/cde/work/workspace/sample.tar.gz"), null)
+                    new File(helper.test_file()), null)
                     .get();
             try {
                 Assert.assertNotNull(o);
                 System.out.println(o);
                 checkObject(o,
-                        new File("/home/cde/work/workspace/sample.tar.gz"));
+                        new File(helper.test_file()));
 
             } finally {
                 client.deleteObject(url, assertListener()).get();
@@ -227,13 +229,13 @@ public class ClientTest {
         client.createContainer(url, assertListener()).get();
         try {
             ObjectInfo o = client.putObject(url, 8192L,
-                    new File("/home/cde/work/workspace/sample.tar.gz"), null)
+                    new File(helper.test_file()), null)
                     .get();
             try {
                 Assert.assertNotNull(o);
                 System.out.println(o);
                 checkObject(o,
-                        new File("/home/cde/work/workspace/sample.tar.gz"));
+                        new File(helper.test_file()));
             } finally {
                 client.deleteObject(url, assertListener()).get();
             }
@@ -251,12 +253,12 @@ public class ClientTest {
         client.createContainer(url, assertListener()).get();
         try {
             ObjectInfo o = client.putObject(url, 1090000L,
-                    new File("/home/cde/work/workspace/sample.tar.gz"), null)
+                    new File(helper.test_file()), null)
                     .get();
             try {
                 Assert.assertNotNull(o);
                 checkObject(o,
-                        new File("/home/cde/work/workspace/sample.tar.gz"));
+                        new File(helper.test_file()));
                 System.out.println(o);
             } finally {
                 client.deleteObject(url, assertListener()).get();
