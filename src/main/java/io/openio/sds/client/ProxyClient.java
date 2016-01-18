@@ -185,7 +185,7 @@ public class ProxyClient {
 
             @Override
             public void onThrowable(Throwable t) {
-                t.printStackTrace();
+            if (null != listener)
                 listener.onThrowable(t);
             }
         };
@@ -284,6 +284,7 @@ public class ProxyClient {
      * @param objectInfo
      *            informations about the Object to commit
      * @param listener
+     *            listener
      * @return
      */
     public ListenableFuture<ObjectInfo> putObject(ObjectInfo objectInfo,
