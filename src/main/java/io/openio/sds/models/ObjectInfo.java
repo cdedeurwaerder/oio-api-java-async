@@ -1,8 +1,9 @@
 package io.openio.sds.models;
 
-import static java.util.stream.Collectors.groupingBy;
-
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,11 +27,17 @@ public class ObjectInfo {
     private List<ChunkInfo> chunks;
     private transient Map<Integer, List<ChunkInfo>> sortedChunks;
 
-    private static final Comparator<ChunkInfo> comparator = (c1, c2) -> c1.pos()
-            .compare(c2.pos());
+    private static final Comparator<ChunkInfo> comparator = new Comparator<ChunkInfo>() {
+
+        @Override
+        public int compare(ChunkInfo c1, ChunkInfo c2) {
+            return c1.pos()
+                    .compare(c2.pos());
+        }
+    };
 
     public ObjectInfo() {
-        //TODO: content hash
+        // TODO: content hash
         this.hash = BaseEncoding.base16()
                 .encode(Hashing.md5().hashBytes("".getBytes()).asBytes());
     }
@@ -174,9 +181,22 @@ public class ObjectInfo {
 
     private Map<Integer, List<ChunkInfo>> sortChunks(
             List<ChunkInfo> chunks) {
-        Map<Integer, List<ChunkInfo>> res = chunks.stream()
-                .collect(groupingBy((c) -> c.pos().meta()));
-        res.values().forEach(l -> l.stream().sorted(comparator));
+//        Map<Integer, List<ChunkInfo>> res = chunks.stream()
+//                .collect(groupingBy((c) -> c.pos().meta()));
+//        res.values().forEach(l -> l.stream().sorted(comparator));
+        
+        Map<Integer, List<ChunkInfo>> res = new HashMap<Integer, List<ChunkInfo>>();
+        for(ChunkInfo ci : chunks){
+            List<ChunkInfo> l = res.get(ci.pos().meta());
+            if(null == l){
+                l = new ArrayList<ChunkInfo>();
+                res.put(ci.pos().meta(), l);
+            }
+            l.add(ci);    
+        }
+        for(List<ChunkInfo> l : res.values())
+            Collections.sort(l, comparator);
+        
         return res;
     }
 }

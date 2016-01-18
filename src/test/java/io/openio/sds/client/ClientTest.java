@@ -60,7 +60,7 @@ public class ClientTest {
     @Test
     public void containerNominal()
             throws InterruptedException, ExecutionException {
-        OioUrl url = url(ACCOUNT, UUID.randomUUID().toString());
+        final OioUrl url = url(ACCOUNT, UUID.randomUUID().toString());
         client.createContainer(url, new CompletionListener<ContainerInfo>() {
             @Override
             public void onThrowable(Throwable t) {
@@ -69,7 +69,7 @@ public class ClientTest {
 
             @Override
             public void onResponse(ContainerInfo obj) throws Exception {
-                client.deleteContainer(url, assertListener()).get();
+                client.deleteContainer(url, booleanAssertListener()).get();
             }
         }).get();
     }
@@ -77,7 +77,7 @@ public class ClientTest {
     @Test
     public void doubleCreateContainer()
             throws InterruptedException, ExecutionException {
-        OioUrl url = url(ACCOUNT, UUID.randomUUID().toString());
+        final OioUrl url = url(ACCOUNT, UUID.randomUUID().toString());
         client.createContainer(url, new CompletionListener<ContainerInfo>() {
 
             @Override
@@ -88,13 +88,13 @@ public class ClientTest {
             @Override
             public void onResponse(ContainerInfo obj) throws Exception {
                 try {
-                    client.createContainer(url, assertListener()).get();
+                    client.createContainer(url, containerInfoAssertListener()).get();
                     Assert.fail();
                 } catch (ExecutionException e) {
                     Assert.assertTrue(
                             e.getCause() instanceof ContainerExistException);
                 } finally {
-                    client.deleteContainer(url, assertListener()).get();
+                    client.deleteContainer(url, booleanAssertListener()).get();
                 }
             }
         }).get();
@@ -117,7 +117,7 @@ public class ClientTest {
             throws InterruptedException, ExecutionException {
         try {
             client.getContainerInfo(url(ACCOUNT, UUID.randomUUID().toString()),
-                    assertListener()).get();
+                    containerInfoAssertListener()).get();
         } catch (ExecutionException e) {
             Assert.assertTrue(
                     e.getCause() instanceof ContainerNotFoundException);
@@ -129,7 +129,7 @@ public class ClientTest {
             throws InterruptedException, ExecutionException {
         OioUrl url = url(ACCOUNT, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
-        client.createContainer(url, assertListener()).get();
+        client.createContainer(url, containerInfoAssertListener()).get();
         byte[] src = new byte[0];
         try {
             ObjectInfo o = client
@@ -140,10 +140,10 @@ public class ClientTest {
                 System.out.println(o);
                 checkObject(o, src);
             } finally {
-                client.deleteObject(url, assertListener()).get();
+                client.deleteObject(url, objectInfoAssertListener()).get();
             }
         } finally {
-            client.deleteContainer(url, assertListener()).get();
+            client.deleteContainer(url, booleanAssertListener()).get();
         }
     }
 
@@ -153,7 +153,7 @@ public class ClientTest {
         for (int i = 0; i < 2; i++) {
             OioUrl url = url(ACCOUNT, UUID.randomUUID().toString(),
                     UUID.randomUUID().toString());
-            client.createContainer(url, assertListener()).get();
+            client.createContainer(url, containerInfoAssertListener()).get();
             byte[] src = bytes(8192);
             try {
                 ObjectInfo o = client.putObject(url, 8192L,
@@ -163,10 +163,10 @@ public class ClientTest {
                     checkObject(o, src);
                     System.out.println(o);
                 } finally {
-                    client.deleteObject(url, assertListener()).get();
+                    client.deleteObject(url, objectInfoAssertListener()).get();
                 }
             } finally {
-                client.deleteContainer(url, assertListener()).get();
+                client.deleteContainer(url, booleanAssertListener()).get();
             }
         }
     }
@@ -177,7 +177,7 @@ public class ClientTest {
             throws InterruptedException, ExecutionException {
         OioUrl url = url(ACCOUNT, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
-        client.createContainer(url, assertListener()).get();
+        client.createContainer(url, containerInfoAssertListener()).get();
         byte[] src = bytes(1090000);
         try {
             ObjectInfo o = client.putObject(url, 1090000L,
@@ -188,10 +188,10 @@ public class ClientTest {
                 checkObject(o, src);
                 System.out.println(o);
             } finally {
-                client.deleteObject(url, assertListener()).get();
+                client.deleteObject(url, objectInfoAssertListener()).get();
             }
         } finally {
-            client.deleteContainer(url, assertListener()).get();
+            client.deleteContainer(url, booleanAssertListener()).get();
         }
     }
 
@@ -201,7 +201,7 @@ public class ClientTest {
             FileNotFoundException {
         OioUrl url = url(ACCOUNT, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
-        client.createContainer(url, assertListener()).get();
+        client.createContainer(url, containerInfoAssertListener()).get();
         try {
             ObjectInfo o = client.putObject(url, 0L,
                     new File(helper.test_file()), null)
@@ -213,10 +213,10 @@ public class ClientTest {
                         new File(helper.test_file()));
 
             } finally {
-                client.deleteObject(url, assertListener()).get();
+                client.deleteObject(url, objectInfoAssertListener()).get();
             }
         } finally {
-            client.deleteContainer(url, assertListener()).get();
+            client.deleteContainer(url, booleanAssertListener()).get();
         }
     }
 
@@ -226,7 +226,7 @@ public class ClientTest {
             FileNotFoundException {
         OioUrl url = url(ACCOUNT, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
-        client.createContainer(url, assertListener()).get();
+        client.createContainer(url, containerInfoAssertListener()).get();
         try {
             ObjectInfo o = client.putObject(url, 8192L,
                     new File(helper.test_file()), null)
@@ -237,10 +237,10 @@ public class ClientTest {
                 checkObject(o,
                         new File(helper.test_file()));
             } finally {
-                client.deleteObject(url, assertListener()).get();
+                client.deleteObject(url, objectInfoAssertListener()).get();
             }
         } finally {
-            client.deleteContainer(url, assertListener()).get();
+            client.deleteContainer(url, booleanAssertListener()).get();
         }
     }
 
@@ -250,7 +250,7 @@ public class ClientTest {
             FileNotFoundException {
         OioUrl url = url(ACCOUNT, UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
-        client.createContainer(url, assertListener()).get();
+        client.createContainer(url, containerInfoAssertListener()).get();
         try {
             ObjectInfo o = client.putObject(url, 1090000L,
                     new File(helper.test_file()), null)
@@ -261,15 +261,30 @@ public class ClientTest {
                         new File(helper.test_file()));
                 System.out.println(o);
             } finally {
-                client.deleteObject(url, assertListener()).get();
+                client.deleteObject(url, objectInfoAssertListener()).get();
             }
         } finally {
-            client.deleteContainer(url, assertListener()).get();
+            client.deleteContainer(url, booleanAssertListener()).get();
         }
     }
 
-    private <T> CompletionListener<T> assertListener() {
-        return new CompletionListener<T>() {
+//    private <T> CompletionListener<T> assertListener() {
+//        return new CompletionListener<T>() {
+//
+//            @Override
+//            public void onThrowable(Throwable t) {
+//                Assert.fail(t.getMessage());
+//            }
+//
+//            @Override
+//            public void onResponse(T obj) throws Exception {
+//                logger.info("Action completed " + obj);
+//            }
+//        };
+//    }
+    
+    private CompletionListener<ContainerInfo> containerInfoAssertListener() {
+        return new CompletionListener<ContainerInfo>() {
 
             @Override
             public void onThrowable(Throwable t) {
@@ -277,7 +292,37 @@ public class ClientTest {
             }
 
             @Override
-            public void onResponse(T obj) throws Exception {
+            public void onResponse(ContainerInfo obj) throws Exception {
+                logger.info("Action completed " + obj);
+            }
+        };
+    }
+    
+    private CompletionListener<ObjectInfo> objectInfoAssertListener() {
+        return new CompletionListener<ObjectInfo>() {
+
+            @Override
+            public void onThrowable(Throwable t) {
+                Assert.fail(t.getMessage());
+            }
+
+            @Override
+            public void onResponse(ObjectInfo obj) throws Exception {
+                logger.info("Action completed " + obj);
+            }
+        };
+    }
+    
+    private CompletionListener<Boolean> booleanAssertListener() {
+        return new CompletionListener<Boolean>() {
+
+            @Override
+            public void onThrowable(Throwable t) {
+                Assert.fail(t.getMessage());
+            }
+
+            @Override
+            public void onResponse(Boolean obj) throws Exception {
                 logger.info("Action completed " + obj);
             }
         };
@@ -298,9 +343,9 @@ public class ClientTest {
         // }
     }
 
-    public void checkObject(ObjectInfo oinf, InputStream src)
+    public void checkObject(final ObjectInfo oinf, final InputStream src)
             throws InterruptedException, ExecutionException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         client.downloadObject(oinf,
                 new DownloadListener() {
 

@@ -2,10 +2,19 @@ package io.openio.sds.client;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.net.HttpHeaders.CONTENT_LENGTH;
-import static io.openio.sds.client.OioConstants.*;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CHUNK_HASH;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CHUNK_ID;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CHUNK_POS;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CONTAINER_ID;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_CHUNKSNB;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_CHUNK_METHOD;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_ID;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_MIME_TYPE;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_PATH;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_POLICY;
+import static io.openio.sds.client.OioConstants.CHUNK_META_CONTENT_SIZE;
 import static java.lang.String.format;
 import static java.nio.ByteBuffer.wrap;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.EOFException;
 import java.io.File;
@@ -16,12 +25,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.asynchttpclient.AsyncCompletionHandler;
 import org.asynchttpclient.AsyncHandler;
@@ -64,14 +76,12 @@ public class RawxClient {
     RawxClient(AsyncHttpClient http, RawxSettings settings) {
         this.http = http;
         this.settings = settings;
-        this.executors = new ThreadPoolExecutor(
-                MIN_WORKERS,
+        this.executors = new ThreadPoolExecutor(MIN_WORKERS,
                 MAX_WORKERS,
                 IDLE_THREAD_KEEP_ALIVE,
-                SECONDS,
-                new LinkedBlockingQueue<>(BACKLOG_MAX_SIZE),
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(BACKLOG_MAX_SIZE),
                 new ThreadFactory() {
-
                     @Override
                     public Thread newThread(Runnable r) {
                         Thread t = new Thread(r);
@@ -100,7 +110,7 @@ public class RawxClient {
      * @return a ListenableFuture which handles the updated {@code ObjectInfo}
      */
     public CompletableFuture<ObjectInfo> uploadChunks(ObjectInfo oinf,
-            InputStream data, UploadListener listener) {
+            final InputStream data, final UploadListener listener) {
         long remaining = oinf.size();
         long size = Math.min(remaining, oinf.chunksize(0));
         CompletableFuture<ObjectInfo> f = uploadPosition(oinf, 0, size, data,
@@ -110,13 +120,27 @@ public class RawxClient {
             final int pos = i;
             final long csize = Math.min(remaining, oinf.chunksize(pos));
             f = f.thenCompose(
-                    o -> uploadPosition(oinf, pos, csize, data, listener));
+                    new Function<ObjectInfo, CompletionStage<ObjectInfo>>() {
+
+                        @Override
+                        public CompletionStage<ObjectInfo> apply(
+                                ObjectInfo oinf) {
+                            return uploadPosition(oinf, pos, csize, data,
+                                    listener);
+                        }
+
+                    });
+
             remaining -= csize;
         }
-        return f.thenApply(o -> {
-            if (null != listener)
-                listener.onCompleted();
-            return o;
+        return f.thenApply(new Function<ObjectInfo, ObjectInfo>() {
+
+            @Override
+            public ObjectInfo apply(ObjectInfo o) {
+                if (null != listener)
+                    listener.onCompleted();
+                return o;
+            }
         });
     }
 
@@ -132,8 +156,8 @@ public class RawxClient {
      * @return a ListenableFuture which handles the updated {@code ObjectInfo}
      */
     public CompletableFuture<ObjectInfo> uploadChunks(
-            ObjectInfo oinf, File data, UploadListener listener) {
-        List<CompletableFuture<ObjectInfo>> futures = new ArrayList<>();
+            final ObjectInfo oinf, File data, final UploadListener listener) {
+        List<CompletableFuture<ObjectInfo>> futures = new ArrayList<CompletableFuture<ObjectInfo>>();
         long remaining = oinf.size();
         for (int i = 0; i < oinf.sortedChunks().size(); i++) {
             long size = Math.min(remaining,
@@ -143,10 +167,14 @@ public class RawxClient {
         }
         return CompletableFuture
                 .allOf(futures.toArray(new CompletableFuture[futures.size()]))
-                .thenApply(v -> {
-                    if (null != listener)
-                        listener.onCompleted();
-                    return oinf;
+                .thenApply(new Function<Void, ObjectInfo>() {
+
+                    @Override
+                    public ObjectInfo apply(Void v) {
+                        if (null != listener)
+                            listener.onCompleted();
+                        return oinf;
+                    }
                 });
     }
 
@@ -178,20 +206,22 @@ public class RawxClient {
 
     /* --- INTERNALS --- */
 
-    private CompletableFuture<ObjectInfo> uploadPosition(ObjectInfo oinf,
-            int pos, Long size, InputStream data, UploadListener listener) {
-        List<CompletableFuture<ObjectInfo>> futures = new ArrayList<>();
+    private CompletableFuture<ObjectInfo> uploadPosition(final ObjectInfo oinf,
+            final int pos, final Long size, InputStream data,
+            final UploadListener listener) {
+        List<CompletableFuture<ObjectInfo>> futures = new ArrayList<CompletableFuture<ObjectInfo>>();
         List<ChunkInfo> cil = oinf.sortedChunks().get(pos);
         List<OioQueueBasedFeedableBodyGenerator> gens = size == 0 ? null
                 : feedableBodys(cil.size(), size);
         for (int i = 0; i < cil.size(); i++) {
-            ChunkInfo ci = cil.get(i);
+            final ChunkInfo ci = cil.get(i);
             BoundRequestBuilder builder = http.preparePut(ci.url())
                     .setHeader(CHUNK_META_CONTAINER_ID, oinf.url().cid())
                     .setHeader(CHUNK_META_CONTENT_ID, oinf.oid())
                     .setHeader(CHUNK_META_CONTENT_POLICY, oinf.policy())
                     .setHeader(CHUNK_META_CONTENT_MIME_TYPE, oinf.mtype())
-                    .setHeader(CHUNK_META_CONTENT_CHUNK_METHOD, oinf.chunkMethod())
+                    .setHeader(CHUNK_META_CONTENT_CHUNK_METHOD,
+                            oinf.chunkMethod())
                     .setHeader(CHUNK_META_CONTENT_CHUNKSNB,
                             String.valueOf(oinf.nbchunks()))
                     .setHeader(CHUNK_META_CONTENT_SIZE,
@@ -233,16 +263,20 @@ public class RawxClient {
         startConsumer(data, size, gens, futures);
         return CompletableFuture
                 .allOf(futures.toArray(new CompletableFuture[futures.size()]))
-                .thenApply(v -> {
-                    if (null != listener)
-                        listener.onPositionCompleted(pos);
-                    return oinf;
+                .thenApply(new Function<Void, ObjectInfo>() {
+
+                    @Override
+                    public ObjectInfo apply(Void t) {
+                        if (null != listener)
+                            listener.onPositionCompleted(pos);
+                        return oinf;
+                    }
                 });
     }
 
-    private void startConsumer(InputStream data, Long size,
-            List<OioQueueBasedFeedableBodyGenerator> gens,
-            List<? extends Future<ObjectInfo>> futures) {
+    private void startConsumer(final InputStream data, final Long size,
+            final List<OioQueueBasedFeedableBodyGenerator> gens,
+            final List<? extends Future<ObjectInfo>> futures) {
         executors.submit(new Callable<Void>() {
 
             @Override
@@ -258,7 +292,8 @@ public class RawxClient {
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
-                        futures.stream().forEach(f -> f.cancel(true));
+                        for (Future<ObjectInfo> f : futures)
+                            f.cancel(true);
                         throw e;
                     }
                 }
@@ -281,21 +316,24 @@ public class RawxClient {
 
     private List<OioQueueBasedFeedableBodyGenerator> feedableBodys(int count,
             long size) {
-        ArrayList<OioQueueBasedFeedableBodyGenerator> res = new ArrayList<>();
+        ArrayList<OioQueueBasedFeedableBodyGenerator> res = new ArrayList<OioQueueBasedFeedableBodyGenerator>();
         for (int i = 0; i < count; i++)
             res.add(new OioQueueBasedFeedableBodyGenerator(5));
         return res;
     }
 
-    private void uploadPosition(ObjectInfo oinf, int pos, long remaining,
-            long size, File data, UploadListener listener,
+    private void uploadPosition(final ObjectInfo oinf, final int pos,
+            long remaining, final long size, File data,
+            final UploadListener listener,
             List<CompletableFuture<ObjectInfo>> futures) {
-        for (ChunkInfo ci : oinf.sortedChunks().get(pos)) {
+        for (ChunkInfo it : oinf.sortedChunks().get(pos)) {
+            final ChunkInfo ci = it;
             futures.add(http.preparePut(ci.url())
                     .setHeader(CHUNK_META_CONTAINER_ID, oinf.url().cid())
                     .setHeader(CHUNK_META_CONTENT_ID, oinf.oid())
                     .setHeader(CHUNK_META_CONTENT_POLICY, oinf.policy())
-                    .setHeader(CHUNK_META_CONTENT_CHUNK_METHOD, oinf.chunkMethod())
+                    .setHeader(CHUNK_META_CONTENT_CHUNK_METHOD,
+                            oinf.chunkMethod())
                     .setHeader(CHUNK_META_CONTENT_MIME_TYPE, oinf.mtype())
                     .setHeader(CHUNK_META_CONTENT_CHUNKSNB,
                             String.valueOf(oinf.chunks().size()))
@@ -330,14 +368,15 @@ public class RawxClient {
         }
     }
 
-    private void downloadPosition(ObjectInfo oinf, int pos, int retry,
-            DownloadListener listener,
-            LinkedList<ListenableFuture<Boolean>> futures,
-            Semaphore lock) {
+    private void downloadPosition(final ObjectInfo oinf, final int pos,
+            final int retry,
+            final DownloadListener listener,
+            final LinkedList<ListenableFuture<Boolean>> futures,
+            final Semaphore lock) {
         if (oinf.sortedChunks().get(pos).size() < retry + 1)
             throw new SdsException(
                     String.format("Could not download chunk at pos %d", pos));
-        ChunkInfo ci = oinf.sortedChunks().get(pos).get(retry);
+        final ChunkInfo ci = oinf.sortedChunks().get(pos).get(retry);
 
         AsyncHandler<Boolean> handler = new AsyncHandler<Boolean>() {
 

@@ -4,7 +4,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import org.asynchttpclient.AsyncHttpClient;
 
@@ -65,25 +67,59 @@ public class DefaultClient implements Client {
     }
 
     @Override
-    public Future<ObjectInfo> putObject(OioUrl url, long size, File data,
-            CompletionListener<ObjectInfo> listener) {
+    public Future<ObjectInfo> putObject(OioUrl url, long size, final File data,
+            final CompletionListener<ObjectInfo> listener) {
         checkArgument(null != url, "url cannot be null");
         checkArgument(null != url.object(), "url object cannot be null");
         return proxy.getBeans(url, size, null).toCompletableFuture()
-                .thenCompose(o -> rawx.uploadChunks(o, data, null))
-                .thenCompose(o -> proxy.putObject(o, listener)
-                        .toCompletableFuture());
+                .thenCompose(
+                        new Function<ObjectInfo, CompletionStage<ObjectInfo>>() {
+
+                            @Override
+                            public CompletionStage<ObjectInfo> apply(
+                                    ObjectInfo o) {
+                                return rawx.uploadChunks(o, data, null);
+                            }
+                        })
+                .thenCompose(
+                        new Function<ObjectInfo, CompletionStage<ObjectInfo>>() {
+
+                            @Override
+                            public CompletionStage<ObjectInfo> apply(
+                                    ObjectInfo o) {
+                                return proxy.putObject(o, listener)
+                                        .toCompletableFuture();
+                            }
+                        })
+                .toCompletableFuture();
     }
 
     @Override
-    public Future<ObjectInfo> putObject(OioUrl url, long size, InputStream data,
-            CompletionListener<ObjectInfo> listener) {
+    public Future<ObjectInfo> putObject(OioUrl url, long size,
+            final InputStream data,
+            final CompletionListener<ObjectInfo> listener) {
         checkArgument(null != url, "url cannot be null");
         checkArgument(null != url.object(), "url object cannot be null");
         return proxy.getBeans(url, size, null).toCompletableFuture()
-                .thenCompose(o -> rawx.uploadChunks(o, data, null))
-                .thenCompose(o -> proxy.putObject(o, listener)
-                        .toCompletableFuture());
+                .thenCompose(
+                        new Function<ObjectInfo, CompletionStage<ObjectInfo>>() {
+
+                            @Override
+                            public CompletionStage<ObjectInfo> apply(
+                                    ObjectInfo o) {
+                                return rawx.uploadChunks(o, data, null);
+                            }
+                        })
+                .thenCompose(
+                        new Function<ObjectInfo, CompletionStage<ObjectInfo>>() {
+
+                            @Override
+                            public CompletionStage<ObjectInfo> apply(
+                                    ObjectInfo o) {
+                                return proxy.putObject(o, listener)
+                                        .toCompletableFuture();
+                            }
+                        });
     }
 
     @Override

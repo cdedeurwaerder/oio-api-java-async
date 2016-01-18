@@ -1,7 +1,32 @@
 package io.openio.sds.client;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static io.openio.sds.client.OioConstants.*;
+import static io.openio.sds.client.OioConstants.ACCOUNT_HEADER;
+import static io.openio.sds.client.OioConstants.CONTAINER_SYS_NAME_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_CHUNK_METHOD_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_CTIME_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_HASH_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_HASH_METHOD_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_ID_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_LENGTH_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_MIME_TYPE_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_POLICY_HEADER;
+import static io.openio.sds.client.OioConstants.CONTENT_META_VERSION_HEADER;
+import static io.openio.sds.client.OioConstants.LIST_TRUNCATED_HEADER;
+import static io.openio.sds.client.OioConstants.M2_CTIME_HEADER;
+import static io.openio.sds.client.OioConstants.M2_INIT_HEADER;
+import static io.openio.sds.client.OioConstants.M2_USAGE_HEADER;
+import static io.openio.sds.client.OioConstants.M2_VERSION_HEADER;
+import static io.openio.sds.client.OioConstants.NS_HEADER;
+import static io.openio.sds.client.OioConstants.OIO_ACTION_MODE_HEADER;
+import static io.openio.sds.client.OioConstants.SCHEMA_VERSION_HEADER;
+import static io.openio.sds.client.OioConstants.TYPE_HEADER;
+import static io.openio.sds.client.OioConstants.USER_NAME_HEADER;
+import static io.openio.sds.client.OioConstants.VERSION_MAIN_ADMIN_HEADER;
+import static io.openio.sds.client.OioConstants.VERSION_MAIN_ALIASES_HEADER;
+import static io.openio.sds.client.OioConstants.VERSION_MAIN_CHUNKS_HEADER;
+import static io.openio.sds.client.OioConstants.VERSION_MAIN_CONTENTS_HEADER;
+import static io.openio.sds.client.OioConstants.VERSION_MAIN_PROPERTIES_HEADER;
 import static io.openio.sds.common.HttpHelper.ensureSuccess;
 import static io.openio.sds.common.HttpHelper.longHeader;
 import static io.openio.sds.common.JsonUtils.gson;
@@ -47,7 +72,8 @@ public class ProxyClient {
         this.settings = settings;
     }
 
-    public static ProxyClient client(AsyncHttpClient http, ProxySettings settings) {
+    public static ProxyClient client(AsyncHttpClient http,
+            ProxySettings settings) {
         checkArgument(null != http, "AsynHttpClient cannot be null");
         checkArgument(null != settings, "ProxySettings cannot be null");
         return new ProxyClient(http, settings);
@@ -61,10 +87,10 @@ public class ProxyClient {
      * @param listener
      *            the listener to use on completion or exception. Could be
      *            {@code null}.
-     * @return a {@code ListenableFuture<ContainerInfo>} available when the operation
-     *         is completed
+     * @return a {@code ListenableFuture<ContainerInfo>} available when the
+     *         operation is completed
      */
-    public ListenableFuture<ContainerInfo> createContainer(OioUrl url,
+    public ListenableFuture<ContainerInfo> createContainer(final OioUrl url,
             final CompletionListener<ContainerInfo> listener) {
         AsyncCompletionHandler<ContainerInfo> handler = new AsyncCompletionHandler<ContainerInfo>() {
             @Override
@@ -101,7 +127,7 @@ public class ProxyClient {
      * @param listener
      * @return
      */
-    public ListenableFuture<ContainerInfo> getContainerInfo(OioUrl url,
+    public ListenableFuture<ContainerInfo> getContainerInfo(final OioUrl url,
             final CompletionListener<ContainerInfo> listener) {
         AsyncCompletionHandler<ContainerInfo> handler = new AsyncCompletionHandler<ContainerInfo>() {
             @Override
@@ -195,11 +221,14 @@ public class ProxyClient {
                         url.container()))
                 .addQueryParam("max", String.valueOf(listOptions.getLimit()));
         if (null != listOptions.getPrefix())
-            builder.addQueryParam("prefix", String.valueOf(listOptions.getPrefix()));
+            builder.addQueryParam("prefix",
+                    String.valueOf(listOptions.getPrefix()));
         if (null != listOptions.getMarker())
-            builder.addQueryParam("marker", String.valueOf(listOptions.getMarker()));
+            builder.addQueryParam("marker",
+                    String.valueOf(listOptions.getMarker()));
         if (null != listOptions.getDelimiter())
-            builder.addQueryParam("delimiter", String.valueOf(listOptions.getDelimiter()));
+            builder.addQueryParam("delimiter",
+                    String.valueOf(listOptions.getDelimiter()));
         return builder.execute(handler);
     }
 
@@ -250,7 +279,7 @@ public class ProxyClient {
      *            the listener to check operation progression
      * @return a ListenableFuture which handles {@code ObjectInfo}
      */
-    public ListenableFuture<ObjectInfo> getBeans(OioUrl url, long size,
+    public ListenableFuture<ObjectInfo> getBeans(final OioUrl url, long size,
             final CompletionListener<ObjectInfo> listener) {
         AsyncCompletionHandler<ObjectInfo> handler = new AsyncCompletionHandler<ObjectInfo>() {
             @Override
@@ -286,7 +315,7 @@ public class ProxyClient {
      * @param listener
      * @return
      */
-    public ListenableFuture<ObjectInfo> putObject(ObjectInfo objectInfo,
+    public ListenableFuture<ObjectInfo> putObject(final ObjectInfo objectInfo,
             final CompletionListener<ObjectInfo> listener) {
         AsyncCompletionHandler<ObjectInfo> handler = new AsyncCompletionHandler<ObjectInfo>() {
             @Override
@@ -326,7 +355,7 @@ public class ProxyClient {
      *            the listener to check progression
      * @return a ListenableFuture which handles the {@code ObjectInfo}
      */
-    public ListenableFuture<ObjectInfo> getObjectInfo(OioUrl url,
+    public ListenableFuture<ObjectInfo> getObjectInfo(final OioUrl url,
             final CompletionListener<ObjectInfo> listener) {
         AsyncCompletionHandler<ObjectInfo> handler = new AsyncCompletionHandler<ObjectInfo>() {
             @Override
@@ -349,7 +378,6 @@ public class ProxyClient {
                         url.container(), url.object()))
                 .execute(handler);
     }
-    
 
     public ListenableFuture<ObjectInfo> deleteObject(OioUrl url,
             final CompletionListener<ObjectInfo> listener) {
