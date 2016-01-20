@@ -18,8 +18,9 @@ import io.openio.sds.models.OioUrl;
  * <p>
  * Instances of {@code Client} implementations are built with
  * {@link ClientBuilder} class. You could create a basic client by calling
- * {@link ClientBuilder#newClient(String)} method, specifying the OpenIO proxyd
- * service url as argument. The built client is ready to use.
+ * {@link ClientBuilder#newClient(String, String)} method, specifying the OpenIO
+ * namespace and OpenIO proxyd service url as argument.
+ * The built client is ready to use.
  * </p>
  * <p>
  * Simple example:
@@ -116,7 +117,7 @@ public interface Client {
     /**
      * Push an object into the oio namespace
      * 
-     * @param OioUrl
+     * @param url
      *            the url of the object to create
      * @param size
      *            the size of the object
@@ -131,7 +132,7 @@ public interface Client {
     /**
      * Push an object into the oio namespace
      * 
-     * @param OioUrl
+     * @param url
      *            the url of the object to create
      * @param size
      *            the size of the object
@@ -158,7 +159,7 @@ public interface Client {
     /**
      * Returns the data of the specified object
      * 
-     * @param url
+     * @param oinf
      *            the url of the object
      * @param listener
      *            the listener which handles data

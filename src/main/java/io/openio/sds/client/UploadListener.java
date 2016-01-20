@@ -18,7 +18,7 @@ public abstract class UploadListener {
 
 	/**
 	 * Called when the whole chunks of an object are successfully uploaded (even
-	 * copy chunks & parity chunks in case of duplication or rain).
+	 * copy chunks and parity chunks in case of duplication or rain).
 	 */
 	public abstract void onCompleted();
 

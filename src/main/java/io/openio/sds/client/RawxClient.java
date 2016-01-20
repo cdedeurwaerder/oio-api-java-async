@@ -178,17 +178,6 @@ public class RawxClient {
                 });
     }
 
-    /**
-     * Uploads the chunks of the specified {@code ObjectInfo} asynchronously
-     * 
-     * @param oinf
-     *            the ObjectInfo to deal with
-     * @param data
-     *            the data to upload
-     * @param listener
-     *            the {@link UploadListener} to check progression
-     * @return a ListenableFuture which handles the updated {@code ObjectInfo}
-     */
     public List<ListenableFuture<ChunkInfo>> uploadChunks(
             List<ChunkInfo> chunks, byte[] data) {
         throw new RuntimeException("NOT YET IMPL");

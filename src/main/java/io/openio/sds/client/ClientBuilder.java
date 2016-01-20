@@ -7,6 +7,8 @@ import io.openio.sds.client.settings.ProxySettings;
 import io.openio.sds.client.settings.RawxSettings;
 import io.openio.sds.client.settings.Settings;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * Factory of {@code Client}
  * 
@@ -71,6 +73,8 @@ public class ClientBuilder {
      * @return the new client
      */
     public DefaultClient build() {
+        checkArgument(null != ns, "Namespace cannot be null");
+        checkArgument(null != proxydUrl, "Proxyd URL cannot be null");
         return new DefaultClient(null == http ? Dsl.asyncHttpClient() : http,
                 new Settings().proxy(new ProxySettings()
                         .ns(ns)
