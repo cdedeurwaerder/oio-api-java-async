@@ -19,11 +19,14 @@ group = 'io.openio.sds'
 version = '0.1.0'
 
 dependencies {
-  compile group: 'org.asynchttpclient', name: 'async-http-client', version: '2.0.0-RC5'
+  compile fileTree(include: ['*.jar'], dir: 'libs')
   compile group: 'com.google.guava', name: 'guava', version: '18.0'
   compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
   compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.2'
   compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.2'
+  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.13'
+  compile group: 'com.typesafe.netty', name: 'netty-reactive-streams', version: '1.0.1'
+  compile group: 'io.netty', name: 'netty-codec-http', version: '4.0.33.Final'
   testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
